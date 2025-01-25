@@ -1,7 +1,15 @@
 let config = {
   type: Phaser.AUTO,
-  width: 400,
-  height: 600,
+  // Ajustamos a tamaño de la ventana.
+  width: window.innerWidth,
+  height: window.innerHeight,
+  // Opcionalmente, puedes usar en lugar de lo anterior:
+  /*
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
+  */
   physics: {
     default: "arcade",
     arcade: {
@@ -26,21 +34,31 @@ let score = 0;
 let lives = 3;
 let scoreText;
 let livesText;
+// Variable para el tileSprite de fondo
+let backgroundTile;
 
 function preload() {
   // Cargar recursos
-  this.load.image("player", "ruta/dude.png"); // Reemplaza con la ruta a la imagen del jugador
-  this.load.image("obstacle", "assets/bomb.png"); // Reemplaza con la ruta del obstáculo
-  this.load.image("coin", "assets/gift.png"); // Reemplaza con la ruta de la moneda
+  this.load.image("player", "ruta/dude.png");       // Reemplaza con la ruta a la imagen del jugador
+  this.load.image("obstacle", "assets/bomb.png");   // Reemplaza con la ruta del obstáculo
+  this.load.image("coin", "assets/gift.png");       // Reemplaza con la ruta de la moneda
   this.load.image("background", "assets/BG_01.png"); // Fondo
 }
 
 function create() {
-  // Fondo
-  this.add.image(200, 300, "background").setScale(2);
+  // Creamos el tileSprite para el fondo
+  // El tileSprite ocupa todo el ancho y alto del canvas
+  backgroundTile = this.add.tileSprite(
+    0,
+    0,
+    this.sys.canvas.width,
+    this.sys.canvas.height,
+    "background"
+  );
+  backgroundTile.setOrigin(0, 0);
 
   // Jugador
-  player = this.physics.add.sprite(200, 550, "player").setScale(0.5);
+  player = this.physics.add.sprite(this.sys.canvas.width / 2, this.sys.canvas.height/2, "player").setScale(0.5);
   player.setCollideWorldBounds(true);
 
   // Grupos de obstáculos y monedas
@@ -91,15 +109,26 @@ function update() {
   }
 
   // El jugador siempre asciende
-  player.y -= 0.2;
+  player.y -= 0;
+
+  // Mover el fondo para que parezca infinito verticalmente
+  // Si el jugador "sube", podemos desplazar la posición del tile hacia abajo
+  // Ajusta la velocidad a tu gusto
+  backgroundTile.tilePositionY -= 0.2;
 
   // Fin del juego
   if (player.y < 0) {
     if (score >= 10) {
-      this.add.text(100, 250, "¡Ganaste!", { fontSize: "32px", fill: "#0f0" });
+      this.add.text(this.sys.canvas.width / 2 - 70, this.sys.canvas.height / 2, "¡Ganaste!", {
+        fontSize: "32px",
+        fill: "#0f0",
+      });
       this.scene.pause();
     } else {
-      this.add.text(100, 250, "Perdiste", { fontSize: "32px", fill: "#f00" });
+      this.add.text(this.sys.canvas.width / 2 - 70, this.sys.canvas.height / 2, "Perdiste", {
+        fontSize: "32px",
+        fill: "#f00",
+      });
       this.scene.pause();
     }
   }
@@ -107,7 +136,7 @@ function update() {
 
 // Función para generar obstáculos
 function spawnObstacle() {
-  const x = Phaser.Math.Between(50, 350);
+  const x = Phaser.Math.Between(50, this.sys.canvas.width - 50);
   const obstacle = obstacles.create(x, 0, "obstacle").setScale(0.5);
   obstacle.setVelocityY(200); // Velocidad de caída
 
@@ -118,7 +147,7 @@ function spawnObstacle() {
 
 // Función para generar monedas
 function spawnCoin() {
-  const x = Phaser.Math.Between(50, 350);
+  const x = Phaser.Math.Between(50, this.sys.canvas.width - 50);
   const coin = coins.create(x, Phaser.Math.Between(50, 300), "coin").setScale(0.5);
 
   // Desactivar gravedad para las monedas
@@ -142,7 +171,10 @@ function hitObstacle(player, obstacle) {
   livesText.setText("Vidas: " + lives);
 
   if (lives <= 0) {
-    this.add.text(100, 250, "Perdiste", { fontSize: "32px", fill: "#f00" });
+    this.add.text(this.sys.canvas.width / 2 - 70, this.sys.canvas.height / 2, "Perdiste", {
+      fontSize: "32px",
+      fill: "#f00",
+    });
     this.scene.pause();
   }
 }
@@ -151,8 +183,8 @@ function hitObstacle(player, obstacle) {
 function collectCoin(player, coin) {
   coin.destroy();
   score++;
-  scoreText.setText("Monedas: " + score);
+  scoreText.setText("Monedas: " + score);
 }
 
-
-export default gameScene;
+// Si necesitas exportar la escena (depende de tu setup con webpack, parcel, etc.)
+export default config;
