@@ -17,13 +17,13 @@ export class MenuScene extends Phaser.Scene {
         this.intro.setVolume(0.05);
 
         this.add.image(400, 500, 'sky');
-        const playButton = this.add.image(370, 300, 'button');
+        const playButton = this.add.image(500, 400, 'button');
         
         playButton.setInteractive();
 
         playButton.on('pointerdown', () => {
             // Iniciar la escena del juego
-            this.scene.start('gameScene');
+            this.scene.start('InfiniteBackgroundScene');
            // this.intro.stop();
         });
     }
