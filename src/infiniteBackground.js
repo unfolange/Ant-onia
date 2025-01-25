@@ -29,7 +29,7 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     this.load.image("player", "assets/dude.png"); // Ajusta la ruta
     this.load.image("obstacle", "assets/bomb.png");
     this.load.image("coin", "assets/gift.png");
-    this.load.image("background", "assets/Fondo2.png");
+    this.load.image("background2", "assets/Fondo2.png");
 
     // Carga adicional para el obstáculo lento
     this.load.image("slowObstacle", "assets/star.png");
@@ -46,7 +46,7 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
       0,
       this.sys.canvas.width,
       this.sys.canvas.height,
-      "background"
+      "background2"
     );
     this.backgroundTile.setOrigin(0, 0);
 
@@ -65,7 +65,7 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     this.player = this.physics.add
       .sprite(
         this.sys.canvas.width / 2,
-        this.sys.canvas.height / 2,
+        this.sys.canvas.height - 200,
         "Fly_Antonia"
       )
       .setScale(0.5);
