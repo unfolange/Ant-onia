@@ -27,7 +27,7 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
   preload() {
     // Carga de imágenes
     this.load.image("player", "assets/dude.png"); // Ajusta la ruta
-    this.load.image("obstacle", "assets/bomb.png");
+    this.load.image("obstacle", "assets/Gota.png");
     this.load.image("coin", "assets/gift.png");
     this.load.image("background2", "assets/Fondo2.png");
 
