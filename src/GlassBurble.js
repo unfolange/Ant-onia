@@ -1,11 +1,13 @@
 let config = {
   type: Phaser.AUTO,
-  width: 400,
-  height: 600,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
   physics: {
     default: "arcade",
     arcade: {
-      gravity: { y: 0 }, // Sin gravedad
+      gravity: { y: 0 },
       debug: false,
     },
   },
@@ -21,50 +23,59 @@ const game = new Phaser.Game(config);
 let player;
 let cursors;
 let obstacles;
+let slowObstacles;
 let coins;
 let score = 0;
 let lives = 3;
+let collectedCoins = 0;
 let scoreText;
 let livesText;
+let timerText;
+let backgroundTile;
+let timer;
+let timeLimit = 10;
+let midTime;
+let slowObstaclesCreated = false; // Asegurarse de que solo se creen una vez
 
 function preload() {
-  // Cargar recursos
-  this.load.image("player", "ruta/dude.png"); // Reemplaza con la ruta a la imagen del jugador
-  this.load.image("obstacle", "assets/bomb.png"); // Reemplaza con la ruta del obstáculo
-  this.load.image("coin", "assets/gift.png"); // Reemplaza con la ruta de la moneda
-  this.load.image("background", "assets/BG_01.png"); // Fondo
+  this.load.image("player", "ruta/dude.png");
+  this.load.image("obstacle", "assets/star.png");
+  this.load.image("slowObstacle", "assets/bomb.png");
+  this.load.image("coin", "assets/gift.png");
+  this.load.image("background", "assets/Fondo1.png");
 }
 
 function create() {
-  // Fondo
-  this.add.image(200, 300, "background").setScale(2);
+  midTime = Math.floor(timeLimit / 2);
 
-  // Jugador
-  player = this.physics.add.sprite(200, 550, "player").setScale(0.5);
+  backgroundTile = this.add.tileSprite(0, 0, this.sys.canvas.width, this.sys.canvas.height, "background");
+  backgroundTile.setOrigin(0, 0);
+
+  player = this.physics.add.sprite(this.sys.canvas.width / 2, this.sys.canvas.height / 2, "player").setScale(0.5);
   player.setCollideWorldBounds(true);
 
-  // Grupos de obstáculos y monedas
   obstacles = this.physics.add.group();
+  slowObstacles = this.physics.add.group();
   coins = this.physics.add.group();
 
-  // Controles
   cursors = this.input.keyboard.createCursorKeys();
 
-  // Texto de puntaje y vidas
-  scoreText = this.add.text(10, 10, "Monedas: 0", {
-    fontSize: "20px",
-    fill: "#fff",
-  });
-  livesText = this.add.text(10, 40, "Vidas: 3", {
-    fontSize: "20px",
-    fill: "#fff",
+  scoreText = this.add.text(10, 10, "Monedas: 0", { fontSize: "20px", fill: "#fff" });
+  livesText = this.add.text(10, 40, "Vidas: 3", { fontSize: "20px", fill: "#fff" });
+
+  timerText = this.add.text(300, 10, `Tiempo: ${timeLimit}`, { fontSize: "20px", fill: "#fff" });
+
+  timer = this.time.addEvent({
+    delay: 1000,
+    callback: updateTimer,
+    callbackScope: this,
+    loop: true,
   });
 
-  // Colisiones
   this.physics.add.collider(player, obstacles, hitObstacle, null, this);
+  this.physics.add.collider(player, slowObstacles, hitObstacle, null, this);
   this.physics.add.overlap(player, coins, collectCoin, null, this);
 
-  // Temporizadores para generar obstáculos y monedas
   this.time.addEvent({
     delay: 1000,
     callback: spawnObstacle,
@@ -81,7 +92,6 @@ function create() {
 }
 
 function update() {
-  // Movimiento del jugador
   if (cursors.left.isDown) {
     player.setVelocityX(-200);
   } else if (cursors.right.isDown) {
@@ -90,48 +100,70 @@ function update() {
     player.setVelocityX(0);
   }
 
-  // El jugador siempre asciende
-  player.y -= 1;
+  player.y -= 0;
+  backgroundTile.tilePositionY -= 0.2;
 
-  // Fin del juego
   if (player.y < 0) {
     if (score >= 10) {
-      this.add.text(100, 250, "¡Ganaste!", { fontSize: "32px", fill: "#0f0" });
+      this.add.text(this.sys.canvas.width / 2 - 70, this.sys.canvas.height / 2, "¡Ganaste!", { fontSize: "32px", fill: "#0f0" });
       this.scene.pause();
     } else {
-      this.add.text(100, 250, "Perdiste", { fontSize: "32px", fill: "#f00" });
+      this.add.text(this.sys.canvas.width / 2 - 70, this.sys.canvas.height / 2, "Perdiste", { fontSize: "32px", fill: "#f00" });
       this.scene.pause();
     }
   }
 }
 
-// Función para generar obstáculos
 function spawnObstacle() {
-  const x = Phaser.Math.Between(50, 350);
+  const x = Phaser.Math.Between(50, this.sys.canvas.width - 50);
   const obstacle = obstacles.create(x, 0, "obstacle").setScale(0.5);
-  obstacle.setVelocityY(200); // Velocidad de caída
+  obstacle.setVelocityY(200);
 
-  // Eliminar obstáculos fuera de pantalla
   obstacle.checkWorldBounds = true;
   obstacle.outOfBoundsKill = true;
 }
 
-// Función para generar monedas
-function spawnCoin() {
-  const x = Phaser.Math.Between(50, 350);
-  const coin = coins.create(x, 0, "coin").setScale(0.5);
-  coin.setVelocityY(200); // Velocidad de caída
+function spawnSlowObstacle() {
+  /*
+  if (!slowObstaclesCreated) {  // Solo crear obstáculos lentos una vez
+    const x = Phaser.Math.Between(50, this.sys.canvas.width - 50);
+    const slowObstacle = slowObstacles.create(x, 0, "slowObstacle").setScale(0.5);
+    slowObstacle.setVelocityY(100); // Velocidad más lenta
 
-  // Eliminar monedas fuera de pantalla
-  coin.checkWorldBounds = true;
-  coin.outOfBoundsKill = true;
+    slowObstacle.checkWorldBounds = true;
+    slowObstacle.outOfBoundsKill = true;
+
+    //slowObstaclesCreated = true; // Marcar que los obstáculos lentos han sido creados
+  //}
+    */
 }
 
-// Colisión con un obstáculo
+function spawnCoin() {
+  if (coins.countActive(true) <= 3) {
+    for (let i = 0; i < 5; i++) {
+      const x = Phaser.Math.Between(50, 1080);
+      const y = Phaser.Math.Between(50, 300);
+
+      const coin = coins.create(x, y, "coin").setScale(0.5);
+      coin.setGravityY(20);
+      coin.setDragY(15);
+      coin.setBounce(0.3);
+      coin.setCollideWorldBounds(true);
+      coin.checkWorldBounds = true;
+      coin.outOfBoundsKill = true;
+    }
+  }
+}
+
 function hitObstacle(player, obstacle) {
+  // Elimina el obstáculo
   obstacle.destroy();
-  lives--;
+
+  // Reducir las vidas sin afectar la posición del jugador
+  lives--; 
   livesText.setText("Vidas: " + lives);
+
+  player.setVelocity(0);
 
   if (lives <= 0) {
     this.add.text(100, 250, "Perdiste", { fontSize: "32px", fill: "#f00" });
@@ -139,209 +171,52 @@ function hitObstacle(player, obstacle) {
   }
 }
 
-// Recolección de monedas
 function collectCoin(player, coin) {
   coin.destroy();
+  collectedCoins++;
   score++;
-  scoreText.setText("Monedas: " + score);
+  scoreText.setText("Monedas: " + score);
 }
-//   create() {
-//     // A simple background for our game
-//     // this.sound.stopAll();
 
-//     this.christmas = this.sound.add("christmas", { loop: true });
-//     this.inter = this.sound.add("inter");
-//     this.hurt = this.sound.add("hurt");
+function updateTimer() {
+  timeLimit--;
+  timerText.setText(`Tiempo: ${timeLimit}`);
 
-//     this.christmas.play();
-//     this.christmas.setVolume(0.05);
+  if (timeLimit === midTime && !slowObstaclesCreated) {
+    spawnSlowObstacle();
+  }
 
-//     this.gameOver = false;
-//     this.highScore = localStorage.getItem("highScore") || 0;
-//     this.width = 800;
-//     this.height = 500;
-//     this.score = 0;
+  if (timeLimit <= 0) {
+    this.time.removeAllEvents();
+    if (collectedCoins >= 5) {
+      this.add.text(100, 250, "¡Ganaste!", { fontSize: "32px", fill: "#0f0" });
+    } else {
+      this.add.text(100, 250, "¡Perdiste!", { fontSize: "32px", fill: "#f00" });
+    }
+    this.time.delayedCall(2000, resetGame, [], this);
+  }
+}
 
-//     this.add.image(400, 300, "sky");
+function resetGame() {
+  collectedCoins = 0;
+  timeLimit = 10;
+  midTime = Math.floor(timeLimit / 2);
+  slowObstaclesCreated = false; // Resetear la creación de obstáculos lentos
+  score = 0;
+  scoreText.setText("Monedas: 0");
+  lives = 3;
+  livesText.setText("Vidas: 3");
 
-//     // The platforms group contains the ground and the 2 ledges we can jump on
-//     this.platforms = this.physics.add.staticGroup();
+  timerText.setText(`Tiempo: ${timeLimit}`);
+  timer.remove(false);
+  timer = this.time.addEvent({
+    delay: 1000,
+    callback: updateTimer,
+    callbackScope: this,
+    loop: true,
+  });
 
-//     // Create initial platforms
-//     this.createInitialPlatforms();
+  this.scene.restart();
+}
 
-//     // The player and its settings
-//     this.player = this.physics.add.sprite(100, 450, "dude");
-//     this.player.setBounce(0.2);
-//     this.player.setCollideWorldBounds(true);
-
-//     // Player animations
-//     if (!this.anims.exists("left")) {
-//       this.anims.create({
-//         key: "left",
-//         frames: this.anims.generateFrameNumbers("dude", { start: 0, end: 7 }),
-//         frameRate: 10,
-//         repeat: -1,
-//       });
-//     }
-
-//     if (!this.anims.exists("turn")) {
-//       this.anims.create({
-//         key: "turn",
-//         frames: [{ key: "dude", frame: 8 }],
-//         frameRate: 20,
-//       });
-//     }
-
-//     if (!this.anims.exists("right")) {
-//       this.anims.create({
-//         key: "right",
-//         frames: this.anims.generateFrameNumbers("dude", { start: 9, end: 16 }),
-//         frameRate: 10,
-//         repeat: -1,
-//       });
-//     }
-
-//     // Input Events
-//     this.cursors = this.input.keyboard.createCursorKeys();
-
-//     // Stars, bombs, score, and collisions
-//     this.stars = this.physics.add.group({
-//       key: "star",
-//       repeat: 11,
-//       setXY: { x: 12, y: 0, stepX: 70 },
-//     });
-
-//     this.stars.children.iterate(function (child) {
-//       child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
-//     });
-
-//     this.bombs = this.physics.add.group();
-
-//     this.scoreText = this.add.text(16, 16, "Score: 0", {
-//       fontSize: "32px",
-//       fill: "#000",
-//     });
-//     this.highScoreText = this.add.text(
-//       500,
-//       16,
-//       "High Score:" + this.highScore,
-//       { fontSize: "32px", fill: "#000" }
-//     );
-
-//     this.physics.add.collider(this.player, this.platforms);
-//     this.physics.add.collider(this.stars, this.platforms);
-//     this.physics.add.collider(this.bombs, this.platforms);
-
-//     this.physics.add.overlap(
-//       this.player,
-//       this.stars,
-//       this.collectStar,
-//       null,
-//       this
-//     );
-//     this.physics.add.collider(
-//       this.player,
-//       this.bombs,
-//       this.hitBomb,
-//       null,
-//       this
-//     );
-//   }
-
-//   update() {
-//     if (this.gameOver) {
-//       return;
-//     }
-
-//     if (this.cursors.left.isDown) {
-//       console.log("Playing left animation");
-//       this.player.setVelocityX(-160);
-
-//       this.player.anims.play("left", true);
-//     } else if (this.cursors.right.isDown) {
-//       console.log("Playing right animation");
-
-//       this.player.setVelocityX(160);
-
-//       this.player.anims.play("right", true);
-//     } else {
-//       this.player.setVelocityX(0);
-
-//       this.player.anims.play("turn");
-//     }
-
-//     if (this.cursors.up.isDown && this.player.body.touching.down) {
-//       this.player.setVelocityY(-330);
-//     }
-//     // console.log("🚀 ~ file: app.js:132 ~ this.width:", this.width)//768
-
-//     if (this.player.x > this.width - 40 && this.cursors.right.isDown) {
-//       console.log("🚀 ~ file: app.js:134 ~ this.player.x:", this.player.x); //824
-
-//       this.player.x -= this.width;
-//       console.log("🚀 ~ file: app.js:137 ~ this.player.x:", this.player.x); //24
-//     } else if (this.player.x < 40 && this.cursors.left.isDown) {
-//       console.log("🚀 ~ file: app.js:139 ~ this.player.x:", this.player.x);
-//       // Adjust this.player position to wrap around1
-//       this.player.x += this.width;
-//       console.log("🚀 ~ file: app.js:142 ~ this.player.x:", this.player.x); //824
-//     }
-//   }
-
-//   createInitialPlatforms() {
-//     this.platforms.create(350, 568, "ground").setScale(3).refreshBody();
-//     this.platforms.create(600, 400, "ground");
-//     this.platforms.create(50, 250, "ground");
-//     this.platforms.create(750, 220, "ground");
-//   }
-
-//   collectStar(player, star) {
-//     star.disableBody(true, true);
-
-//     //  Add and update the score
-//     this.score += 10;
-//     this.scoreText.setText("Score: " + this.score);
-//     this.inter.play();
-//     this.inter.setVolume(0.05);
-//     // this.highScoreText.setText('High score: ' + this.highScore);
-
-//     if (this.stars.countActive(true) === 0) {
-//       //  A new batch of this.stars to collect
-//       this.stars.children.iterate(function (child) {
-//         child.enableBody(true, child.x, 0, true, true);
-//       });
-
-//       var x =
-//         player.x < 400
-//           ? Phaser.Math.Between(400, 800)
-//           : Phaser.Math.Between(0, 400);
-
-//       var bomb = this.bombs.create(x, 16, "bomb");
-//       bomb.setBounce(1);
-//       bomb.setCollideWorldBounds(true);
-//       bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
-//       bomb.allowGravity = false;
-//     }
-//   }
-
-//   hitBomb(player) {
-//     this.physics.pause();
-
-//     player.setTint(0xff0000);
-
-//     player.anims.play("turn");
-//     this.hurt.play();
-//     this.hurt.setVolume(0.2);
-//     this.gameOver = true;
-//     this.time.delayedCall(
-//       3000,
-//       function () {
-//         this.scene.start("gameOver", { score: this.score });
-//       },
-//       [],
-//       this
-//     );
-//   }
-
-export default gameScene;
+export default config;
