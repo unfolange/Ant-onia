@@ -1,0 +1,19 @@
+{
+  "homepage": "http://unfolange.github.io/christmasadventure",
+  "name": "chritsmasadventure1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "predeploy": "npm install",
+    "deploy": "gh-pages -d build",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "web-dev-server --node-resolve --watch --open"
+  },
+  "author": "unfolange",
+  "license": "ISC",
+  "devDependencies": {
+    "@web/dev-server": "^0.4.1",
+    "gh-pages": "^6.1.0"
+  }
+}
