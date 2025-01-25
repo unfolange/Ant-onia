@@ -22,14 +22,17 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     this.timeLimit = 10;       // Duración total del temporizador
     this.midTime = Math.floor(this.timeLimit / 2); // Momento para crear slowObstacles
     this.slowObstaclesCreated = false;
+    this.speedScreen = 0.2
   }
 
   preload() {
     // Carga de imágenes
     this.load.image("player", "assets/dude.png"); // Ajusta la ruta
     this.load.image("obstacle", "assets/Gota.png");
-    this.load.image("coin", "assets/gift.png");
+    this.load.image("coin", "assets/bellota.png");
     this.load.image("background2", "assets/Fondo2.png");
+    this.load.image("heart", "assets/Face.png"); 
+    this.load.audio("audio_lvl_2", "sounds/sound-level2.mp3");
 
     // Carga adicional para el obstáculo lento
     this.load.image("slowObstacle", "assets/star.png");
@@ -40,6 +43,8 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
   }
 
   create() {
+    this.intro = this.sound.add("audio_lvl_2");
+    this.intro.play();
     // Fondo infinito
     this.backgroundTile = this.add.tileSprite(
       0,
@@ -63,12 +68,12 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
 
     // Jugador
     this.player = this.physics.add
-      .sprite(
-        this.sys.canvas.width / 2,
-        this.sys.canvas.height - 200,
-        "Fly_Antonia"
-      )
-      .setScale(0.5);
+    .sprite(
+      this.sys.canvas.width / 2,
+      this.sys.canvas.height - 200,
+      "Fly_Antonia"
+    )
+    .setScale(0.5);
     this.player.setCollideWorldBounds(true);
     this.player.play("fly", true);
 
@@ -81,14 +86,23 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     this.cursors = this.input.keyboard.createCursorKeys();
 
     // Texto de puntaje y vidas
-    this.scoreText = this.add.text(10, 10, "Monedas: 0", {
+    this.scoreText = this.add.text(10, 10, "Frutos: 0", {
       fontSize: "20px",
       fill: "#fff",
     });
-    this.livesText = this.add.text(10, 40, "Vidas: 3", {
-      fontSize: "20px",
-      fill: "#fff",
-    });
+
+    this.hearts = [];
+
+    // Mostramos tantos corazones como "this.lives"
+    for (let i = 0; i < this.lives; i++) {
+      // La posición X va cambiando para que no se superpongan
+      const heart = this.add
+        .image(10 + i * 40, 40, "heart")
+        .setScale(0.07)   // Ajusta el tamaño según tu svg
+        .setOrigin(0, 0);
+
+      this.hearts.push(heart);
+    }
 
     // Texto de tiempo
     this.timerText = this.add.text(300, 10, `Tiempo: ${this.timeLimit}`, {
@@ -148,7 +162,7 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     }
 
     // Fondo infinito
-    this.backgroundTile.tilePositionY -= 0.2;
+    this.backgroundTile.tilePositionY -= this.speedScreen;
 
     // Generar monedas si hay menos de 3 activas (opcional, ya lo tenemos en spawnCoin)
     if (this.coins.countActive(true) <= 3) {
@@ -188,24 +202,17 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
 
   // Genera obstáculos lentos (solo una vez en el midpoint)
   spawnSlowObstacle() {
-    if (!this.slowObstaclesCreated) {
-      // Crea varios obstáculos lentos
-      for (let i = 0; i < 5; i++) {
-        const x = Phaser.Math.Between(50, this.sys.canvas.width - 50);
-        let slowObstacle = this.slowObstacles
-          .create(x, 0, "slowObstacle")
-          .setScale(0.5);
+    const x = Phaser.Math.Between(50, this.sys.canvas.width - 50);
+    const slowObstacle = this.slowObstacles
+        .create(x, 0, "slowObstacle")
+        .setScale(0.5);
 
-        // Asigna una velocidad más lenta que la de los obstáculos normales
-        slowObstacle.setVelocityY(50);
+    // Asigna una velocidad más lenta que la de los obstáculos normales
+    slowObstacle.setVelocityY(400);
 
-        slowObstacle.checkWorldBounds = true;
-        slowObstacle.outOfBoundsKill = true;
-      }
-
-      this.slowObstaclesCreated = true;
-    }
-  }
+    slowObstacle.checkWorldBounds = true;
+    slowObstacle.outOfBoundsKill = true;
+}
 
   // Genera monedas
   spawnCoin() {
@@ -232,8 +239,11 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
   hitObstacle(player, obstacle) {
     obstacle.destroy();
     this.lives--;
-    this.livesText.setText("Vidas: " + this.lives);
     player.setVelocity(0); // Detenemos al jugador momentáneamente
+
+    if (this.lives >= 0) {
+      this.hearts[this.lives].destroy();
+    }
 
     if (this.lives <= 0) {
       this.add.text(100, 250, "Perdiste", { fontSize: "32px", fill: "#f00" });
@@ -245,7 +255,7 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
   collectCoin(player, coin) {
     coin.destroy();
     this.score++;
-    this.scoreText.setText("Monedas: " + this.score);
+    this.scoreText.setText("Frutos: " + this.score);
   }
 
   // Se llama cada segundo para reducir el tiempo
@@ -254,7 +264,15 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     this.timerText.setText(`Tiempo: ${this.timeLimit}`);
 
     if (this.timeLimit === this.midTime && !this.slowObstaclesCreated) {
-      this.spawnSlowObstacle();
+      this.slowObstaclesCreated = true;
+
+      // Inicia un temporizador para generar obstáculos lentos cada 5 segundos
+      this.time.addEvent({
+          delay: 1500, // Cada 5 segundos
+          callback: this.spawnSlowObstacle,
+          callbackScope: this,
+          loop: true,
+      });
     }
 
     // Si el tiempo se acaba, determinamos victoria o derrota
@@ -283,10 +301,9 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
   // Reinicia la escena y variables
   resetGame() {
     this.score = 0;
-    this.scoreText.setText("Monedas: 0");
+    this.scoreText.setText("Frutos: 0");
     this.lives = 3;
-    this.livesText.setText("Vidas: " + this.lives);
-
+    this.speedScreen = 0.2;
     // Reiniciamos temporizador
     this.timeLimit = 10;       // Duración total del temporizador
     this.midTime = Math.floor(this.timeLimit / 2);

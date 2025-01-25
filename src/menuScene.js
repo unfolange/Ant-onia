@@ -8,6 +8,7 @@ export class MenuScene extends Phaser.Scene {
     this.load.image("sky", "assets/BG_02.png");
     this.load.image("button", "assets/button.png");
     this.load.audio("intro", "sounds/logo.mp3");
+    this.load.audio("interface", "sounds/interface.mp3");
   }
 
   create() {
@@ -20,11 +21,14 @@ export class MenuScene extends Phaser.Scene {
     const playButton = this.add.image(500, 400, "button");
 
     playButton.setInteractive();
-
+    
     playButton.on("pointerdown", () => {
       // Iniciar la escena del juego
-      this.scene.start("gameScene");
-      // this.intro.stop();
+      this.scene.start("CinematicScene");
+      // Detener el sonido de intro si aún está reproduciéndose
+      if (this.intro) {
+          this.intro.stop();
+      }
     });
   }
 }
