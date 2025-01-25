@@ -26,13 +26,21 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
   
     preload() {
       // Carga de imágenes
-      this.load.image("player", "ruta/dude.png"); // Ajusta la ruta
+      this.load.image("player", "assets/dude.png"); // Ajusta la ruta
       this.load.image("obstacle", "assets/bomb.png");
       this.load.image("coin", "assets/gift.png");
-      this.load.image("background", "assets/BG_01.png");
+      this.load.image("background", "assets/Fondo2.png");
   
       // Carga adicional para el obstáculo lento
       this.load.image("slowObstacle", "assets/bomb.png");
+
+      //cargar spritesheet de vuelo
+      // Carga del spritesheet del jugador
+    this.load.spritesheet("Fly_Antonia", "assets/Fly_Antonia.png", {
+      frameWidth: 142, // ancho real de un cuadro
+      frameHeight: 210, // alto real de un cuadro
+    });
+
     }
   
     create() {
@@ -46,15 +54,27 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
       );
       this.backgroundTile.setOrigin(0, 0);
   
-      // Jugador
-      this.player = this.physics.add
-        .sprite(
-          this.sys.canvas.width / 2,
-          this.sys.canvas.height / 2,
-          "player"
-        )
-        .setScale(0.5);
-      this.player.setCollideWorldBounds(true);
+      /// Animación de vuelo
+      this.anims.create({
+        key: "fly",
+        frames: this.anims.generateFrameNumbers("Fly_Antonia", {
+          start: 0,
+          end: 14, // prueba con menos cuadros
+        }),
+        frameRate: 6,
+        repeat: -1,
+      });
+
+  // Jugador
+  this.player = this.physics.add
+    .sprite(
+      this.sys.canvas.width / 2,
+      this.sys.canvas.height / 2,
+      "Fly_Antonia"
+    )
+    .setScale(0.5);
+  this.player.setCollideWorldBounds(true);
+  this.player.play("fly", true);
   
       // Grupos de obstáculos y monedas
       this.obstacles = this.physics.add.group();
