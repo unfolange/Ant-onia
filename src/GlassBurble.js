@@ -1,19 +1,13 @@
 let config = {
   type: Phaser.AUTO,
-  // Ajustamos a tamaño de la ventana.
-  width: window.innerWidth,
-  height: window.innerHeight,
-  // Opcionalmente, puedes usar en lugar de lo anterior:
-  /*
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH
   },
-  */
   physics: {
     default: "arcade",
     arcade: {
-      gravity: { y: 0 }, // Sin gravedad
+      gravity: { y: 0 },
       debug: false,
     },
   },
@@ -29,60 +23,59 @@ const game = new Phaser.Game(config);
 let player;
 let cursors;
 let obstacles;
+let slowObstacles;
 let coins;
 let score = 0;
 let lives = 3;
+let collectedCoins = 0;
 let scoreText;
 let livesText;
-// Variable para el tileSprite de fondo
+let timerText;
 let backgroundTile;
+let timer;
+let timeLimit = 10;
+let midTime;
+let slowObstaclesCreated = false; // Asegurarse de que solo se creen una vez
 
 function preload() {
-  // Cargar recursos
-  this.load.image("player", "ruta/dude.png");       // Reemplaza con la ruta a la imagen del jugador
-  this.load.image("obstacle", "assets/bomb.png");   // Reemplaza con la ruta del obstáculo
-  this.load.image("coin", "assets/gift.png");       // Reemplaza con la ruta de la moneda
-  this.load.image("background", "assets/BG_01.png"); // Fondo
+  this.load.image("player", "ruta/dude.png");
+  this.load.image("obstacle", "assets/star.png");
+  this.load.image("slowObstacle", "assets/bomb.png");
+  this.load.image("coin", "assets/gift.png");
+  this.load.image("background", "assets/Fondo1.png");
 }
 
 function create() {
-  // Creamos el tileSprite para el fondo
-  // El tileSprite ocupa todo el ancho y alto del canvas
-  backgroundTile = this.add.tileSprite(
-    0,
-    0,
-    this.sys.canvas.width,
-    this.sys.canvas.height,
-    "background"
-  );
+  midTime = Math.floor(timeLimit / 2);
+
+  backgroundTile = this.add.tileSprite(0, 0, this.sys.canvas.width, this.sys.canvas.height, "background");
   backgroundTile.setOrigin(0, 0);
 
-  // Jugador
-  player = this.physics.add.sprite(this.sys.canvas.width / 2, this.sys.canvas.height/2, "player").setScale(0.5);
+  player = this.physics.add.sprite(this.sys.canvas.width / 2, this.sys.canvas.height / 2, "player").setScale(0.5);
   player.setCollideWorldBounds(true);
 
-  // Grupos de obstáculos y monedas
   obstacles = this.physics.add.group();
+  slowObstacles = this.physics.add.group();
   coins = this.physics.add.group();
 
-  // Controles
   cursors = this.input.keyboard.createCursorKeys();
 
-  // Texto de puntaje y vidas
-  scoreText = this.add.text(10, 10, "Monedas: 0", {
-    fontSize: "20px",
-    fill: "#fff",
-  });
-  livesText = this.add.text(10, 40, "Vidas: 3", {
-    fontSize: "20px",
-    fill: "#fff",
+  scoreText = this.add.text(10, 10, "Monedas: 0", { fontSize: "20px", fill: "#fff" });
+  livesText = this.add.text(10, 40, "Vidas: 3", { fontSize: "20px", fill: "#fff" });
+
+  timerText = this.add.text(300, 10, `Tiempo: ${timeLimit}`, { fontSize: "20px", fill: "#fff" });
+
+  timer = this.time.addEvent({
+    delay: 1000,
+    callback: updateTimer,
+    callbackScope: this,
+    loop: true,
   });
 
-  // Colisiones
   this.physics.add.collider(player, obstacles, hitObstacle, null, this);
+  this.physics.add.collider(player, slowObstacles, hitObstacle, null, this);
   this.physics.add.overlap(player, coins, collectCoin, null, this);
 
-  // Temporizadores para generar obstáculos y monedas
   this.time.addEvent({
     delay: 1000,
     callback: spawnObstacle,
@@ -99,7 +92,6 @@ function create() {
 }
 
 function update() {
-  // Movimiento del jugador
   if (cursors.left.isDown) {
     player.setVelocityX(-200);
   } else if (cursors.right.isDown) {
@@ -108,73 +100,61 @@ function update() {
     player.setVelocityX(0);
   }
 
-  // El jugador siempre asciende
   player.y -= 0;
-
-  //verifica que las monedas par aspwnearlas
-  // Verificar cuántas monedas hay en pantalla
-  if (coins.countActive(true) <= 4) {
-    spawnCoin(); // Generar monedas si quedan 3 o menos
-  }
-
-  // Mover el fondo para que parezca infinito verticalmente
-  // Si el jugador "sube", podemos desplazar la posición del tile hacia abajo
-  // Ajusta la velocidad a tu gusto
   backgroundTile.tilePositionY -= 0.2;
 
-  // Fin del juego
   if (player.y < 0) {
     if (score >= 10) {
-      this.add.text(this.sys.canvas.width / 2 - 70, this.sys.canvas.height / 2, "¡Ganaste!", {
-        fontSize: "32px",
-        fill: "#0f0",
-      });
+      this.add.text(this.sys.canvas.width / 2 - 70, this.sys.canvas.height / 2, "¡Ganaste!", { fontSize: "32px", fill: "#0f0" });
       this.scene.pause();
     } else {
-      this.add.text(this.sys.canvas.width / 2 - 70, this.sys.canvas.height / 2, "Perdiste", {
-        fontSize: "32px",
-        fill: "#f00",
-      });
+      this.add.text(this.sys.canvas.width / 2 - 70, this.sys.canvas.height / 2, "Perdiste", { fontSize: "32px", fill: "#f00" });
       this.scene.pause();
     }
   }
 }
 
-// Función para generar obstáculos
 function spawnObstacle() {
   const x = Phaser.Math.Between(50, this.sys.canvas.width - 50);
   const obstacle = obstacles.create(x, 0, "obstacle").setScale(0.5);
-  obstacle.setVelocityY(200); // Velocidad de caída
+  obstacle.setVelocityY(200);
 
-  // Eliminar obstáculos fuera de pantalla
   obstacle.checkWorldBounds = true;
   obstacle.outOfBoundsKill = true;
 }
 
-// Función para generar monedas
+function spawnSlowObstacle() {
+  /*
+  if (!slowObstaclesCreated) {  // Solo crear obstáculos lentos una vez
+    const x = Phaser.Math.Between(50, this.sys.canvas.width - 50);
+    const slowObstacle = slowObstacles.create(x, 0, "slowObstacle").setScale(0.5);
+    slowObstacle.setVelocityY(100); // Velocidad más lenta
+
+    slowObstacle.checkWorldBounds = true;
+    slowObstacle.outOfBoundsKill = true;
+
+    //slowObstaclesCreated = true; // Marcar que los obstáculos lentos han sido creados
+  //}
+    */
+}
+
 function spawnCoin() {
-  if (coins.countActive(true) <= 3) { // Generar monedas solo si quedan 3 o menos
-    for (let i = 0; i < 5; i++) { // Crear un grupo de 5 monedas
-      const x = Phaser.Math.Between(50, 1080); // Posición X aleatoria dentro de límites
-      const y = Phaser.Math.Between(50, 300); // Posición Y aleatoria en la mitad superior
+  if (coins.countActive(true) <= 3) {
+    for (let i = 0; i < 5; i++) {
+      const x = Phaser.Math.Between(50, 1080);
+      const y = Phaser.Math.Between(50, 300);
 
       const coin = coins.create(x, y, "coin").setScale(0.5);
-
-      // Configurar el efecto de gravedad personalizada
-      coin.setGravityY(20); // Gravedad leve para caída suave
-      coin.setDragY(15); // Resistencia al movimiento
-      coin.setBounce(0.3); // Rebote ligero al tocar el suelo (opcional)
-
-      // Configurar límites para las monedas
+      coin.setGravityY(20);
+      coin.setDragY(15);
+      coin.setBounce(0.3);
       coin.setCollideWorldBounds(true);
-      coin.onWorldBounds = true;
       coin.checkWorldBounds = true;
       coin.outOfBoundsKill = true;
     }
   }
 }
 
-// Colisión con un obstáculo
 function hitObstacle(player, obstacle) {
   // Elimina el obstáculo
   obstacle.destroy();
@@ -183,22 +163,60 @@ function hitObstacle(player, obstacle) {
   lives--; 
   livesText.setText("Vidas: " + lives);
 
-  // No mover al jugador ni cambiar su velocidad, solo pierde vida
-  player.setVelocity(0);  // Detener cualquier movimiento accidental
+  player.setVelocity(0);
 
-  // Si se acaban las vidas, termina el juego
   if (lives <= 0) {
     this.add.text(100, 250, "Perdiste", { fontSize: "32px", fill: "#f00" });
     this.scene.pause();
   }
 }
 
-// Recolección de monedas
 function collectCoin(player, coin) {
   coin.destroy();
+  collectedCoins++;
   score++;
   scoreText.setText("Monedas: " + score);
 }
 
-// Si necesitas exportar la escena (depende de tu setup con webpack, parcel, etc.)
+function updateTimer() {
+  timeLimit--;
+  timerText.setText(`Tiempo: ${timeLimit}`);
+
+  if (timeLimit === midTime && !slowObstaclesCreated) {
+    spawnSlowObstacle();
+  }
+
+  if (timeLimit <= 0) {
+    this.time.removeAllEvents();
+    if (collectedCoins >= 5) {
+      this.add.text(100, 250, "¡Ganaste!", { fontSize: "32px", fill: "#0f0" });
+    } else {
+      this.add.text(100, 250, "¡Perdiste!", { fontSize: "32px", fill: "#f00" });
+    }
+    this.time.delayedCall(2000, resetGame, [], this);
+  }
+}
+
+function resetGame() {
+  collectedCoins = 0;
+  timeLimit = 10;
+  midTime = Math.floor(timeLimit / 2);
+  slowObstaclesCreated = false; // Resetear la creación de obstáculos lentos
+  score = 0;
+  scoreText.setText("Monedas: 0");
+  lives = 3;
+  livesText.setText("Vidas: 3");
+
+  timerText.setText(`Tiempo: ${timeLimit}`);
+  timer.remove(false);
+  timer = this.time.addEvent({
+    delay: 1000,
+    callback: updateTimer,
+    callbackScope: this,
+    loop: true,
+  });
+
+  this.scene.restart();
+}
+
 export default config;
