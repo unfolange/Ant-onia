@@ -111,6 +111,12 @@ function update() {
   // El jugador siempre asciende
   player.y -= 0;
 
+  //verifica que las monedas par aspwnearlas
+  // Verificar cuántas monedas hay en pantalla
+  if (coins.countActive(true) <= 4) {
+    spawnCoin(); // Generar monedas si quedan 3 o menos
+  }
+
   // Mover el fondo para que parezca infinito verticalmente
   // Si el jugador "sube", podemos desplazar la posición del tile hacia abajo
   // Ajusta la velocidad a tu gusto
@@ -147,34 +153,42 @@ function spawnObstacle() {
 
 // Función para generar monedas
 function spawnCoin() {
-  const x = Phaser.Math.Between(50, this.sys.canvas.width - 50);
-  const coin = coins.create(x, Phaser.Math.Between(50, 300), "coin").setScale(0.5);
+  if (coins.countActive(true) <= 3) { // Generar monedas solo si quedan 3 o menos
+    for (let i = 0; i < 5; i++) { // Crear un grupo de 5 monedas
+      const x = Phaser.Math.Between(50, 1080); // Posición X aleatoria dentro de límites
+      const y = Phaser.Math.Between(50, 300); // Posición Y aleatoria en la mitad superior
 
-  // Desactivar gravedad para las monedas
-  coin.body.allowGravity = false;
+      const coin = coins.create(x, y, "coin").setScale(0.5);
 
-  // Añadir flotación sinusoidal
-  this.tweens.add({
-    targets: coin,
-    y: coin.y + 20, // Amplitud del movimiento
-    duration: 2000, // Duración del movimiento (ms)
-    yoyo: true, // Regresar al punto inicial
-    repeat: -1, // Repetir indefinidamente
-    ease: "Sine.easeInOut", // Movimiento suave
-  });
+      // Configurar el efecto de gravedad personalizada
+      coin.setGravityY(20); // Gravedad leve para caída suave
+      coin.setDragY(15); // Resistencia al movimiento
+      coin.setBounce(0.3); // Rebote ligero al tocar el suelo (opcional)
+
+      // Configurar límites para las monedas
+      coin.setCollideWorldBounds(true);
+      coin.onWorldBounds = true;
+      coin.checkWorldBounds = true;
+      coin.outOfBoundsKill = true;
+    }
+  }
 }
 
 // Colisión con un obstáculo
 function hitObstacle(player, obstacle) {
+  // Elimina el obstáculo
   obstacle.destroy();
-  lives--;
+
+  // Reducir las vidas sin afectar la posición del jugador
+  lives--; 
   livesText.setText("Vidas: " + lives);
 
+  // No mover al jugador ni cambiar su velocidad, solo pierde vida
+  player.setVelocity(0);  // Detener cualquier movimiento accidental
+
+  // Si se acaban las vidas, termina el juego
   if (lives <= 0) {
-    this.add.text(this.sys.canvas.width / 2 - 70, this.sys.canvas.height / 2, "Perdiste", {
-      fontSize: "32px",
-      fill: "#f00",
-    });
+    this.add.text(100, 250, "Perdiste", { fontSize: "32px", fill: "#f00" });
     this.scene.pause();
   }
 }
