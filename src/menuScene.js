@@ -13,7 +13,7 @@ export class MenuScene extends Phaser.Scene {
   create() {
     // Lógica y elementos gráficos del menú
     this.intro = this.sound.add("intro");
-    this.intro.play();
+    //  this.intro.play();
     this.intro.setVolume(0.05);
 
     this.add.image(400, 500, "sky");
