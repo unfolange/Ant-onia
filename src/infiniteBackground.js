@@ -19,7 +19,7 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     // Control del tiempo
     this.timer = null;         // Almacenará el evento de Phaser
     this.timerText = null;
-    this.timeLimit = 10;       // Duración total del temporizador
+    this.timeLimit = 60;       // Duración total del temporizador
     this.midTime = Math.floor(this.timeLimit / 2); // Momento para crear slowObstacles
     this.slowObstaclesCreated = false;
     this.speedScreen = 0.2
@@ -29,16 +29,16 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     // Carga de imágenes
     this.load.image("player", "assets/dude.png"); // Ajusta la ruta
     this.load.image("obstacle", "assets/Gota.png");
-    this.load.image("coin", "assets/bellota.png");
-    this.load.image("background2", "assets/Fondo2.png");
+    this.load.image("coin", "assets/Bellota_Burbuja.png");
+    this.load.image("background2", "assets/Fondo2.jpg");
     this.load.image("heart", "assets/Face.png"); 
     this.load.audio("audio_lvl_2", "sounds/sound-level2.mp3");
 
     // Carga adicional para el obstáculo lento
-    this.load.image("slowObstacle", "assets/star.png");
+    this.load.image("slowObstacle", "assets/Ramita.png");
     this.load.spritesheet("Fly_Antonia", "assets/Fly_Antonia.png", {
       frameWidth: 142, // ancho real de un cuadro
-      frameHeight: 210, // alto real de un cuadro
+      frameHeight: 300, // alto real de un cuadro
     });
   }
 
