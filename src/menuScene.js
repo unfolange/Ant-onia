@@ -5,8 +5,8 @@ export class MenuScene extends Phaser.Scene {
 
   preload() {
     // Cargar recursos necesarios para el menú
-    this.load.image("sky", "assets/BG_02.png");
-    this.load.image("button", "assets/button.png");
+    this.load.image("sky", "assets/Menu1.png");
+    this.load.image("button", "assets/PlayB.png");
     this.load.audio("intro", "sounds/logo.mp3");
     this.load.audio("interface", "sounds/interface.mp3");
   }
@@ -17,8 +17,8 @@ export class MenuScene extends Phaser.Scene {
     //  this.intro.play();
     this.intro.setVolume(0.05);
 
-    this.add.image(400, 500, "sky");
-    const playButton = this.add.image(500, 400, "button");
+    this.add.image(500, 400, "sky").setScale(0.49);
+    const playButton = this.add.image(240, 450, "button");
 
     playButton.setInteractive();
     
