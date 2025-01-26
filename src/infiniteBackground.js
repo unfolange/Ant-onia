@@ -192,8 +192,10 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     // Condición para ganar o perder si el jugador llega arriba (y < 0)
     if (this.player.y < 0) {
       if (this.score >= 10) {
+        this.scene.stop("InfiniteBackgroundScene");
         this.scene.start("gameOver", { resultado: "ganaste", score: this.score });
       } else {
+        this.scene.stop("InfiniteBackgroundScene");
         this.scene.start("gameOver", { resultado: "perdiste", score: this.score });
       }
     }
@@ -277,6 +279,7 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
 
     if (this.lives <= 0) {
       this.muerte.play();
+      this.scene.stop("InfiniteBackgroundScene");
       this.scene.start("gameOver", { resultado: "perdiste", score: this.score });
     }
   }
@@ -345,8 +348,10 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
       this.time.removeAllEvents();
 
       if (this.score >= 10) {
+        this.scene.stop("InfiniteBackgroundScene");
         this.scene.start("endGame", { resultado: "ganaste", score: this.score });
       } else {
+        this.scene.stop("InfiniteBackgroundScene");
         this.scene.start("endGame", { resultado: "perdiste", score: this.score });
       }
     }
