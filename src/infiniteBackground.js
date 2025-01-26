@@ -20,7 +20,7 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     // Control del tiempo
     this.timer = null;         
     this.timerText = null;
-    this.timeLimit = 60;       
+    this.timeLimit = 20;       
     this.firstThird = Math.floor(this.timeLimit / 3);
     this.secondThird = Math.floor((2 * this.timeLimit) / 3);
     this.slowObstaclesCreated = false;

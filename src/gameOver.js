@@ -17,12 +17,12 @@ export class gameOver extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('over', 'assets/game_over.png');
+        this.load.image('over', 'assets/GameOverF.png');
     }
 
     create() {
         this.sound.stopAll();
-        this.add.image(400, 280, 'over');
+        this.add.image(500, 360, 'over').setScale(0.5);
 
         this.add.text(150, 300, 'Score: ' + this.currentScore, {
             fontSize: '32px',

@@ -5,7 +5,7 @@ export class CinematicScene2 extends Phaser.Scene {
   
     preload() {
       // Cargar el video
-      this.load.video('Videolvl2', 'assets/cinematic2.mp4', 'loadeddata', false, true);
+      this.load.video('Videolvl2', 'assets/Scene_02.mp4', 'loadeddata', false, true);
     }
   
     create() {
@@ -30,8 +30,14 @@ export class CinematicScene2 extends Phaser.Scene {
       video.setScale(1.2); // Escalar proporcionalmente
       video.setPosition(820, 200); // Centrar el video
   
-      // Reproducir el video
-      video.play();
+      // Reproducir el video sin audio (en el inicio)
+    video.setMute(true); // Mute al inicio
+    video.play();
+
+    // Desmutear el video después de 1 segundo
+    this.time.delayedCall(1000, () => {
+      video.setMute(false); // Desmutear el video después de 1 segundo
+    });
   
       // Cuando el video termine, cambiar a la escena del juego
       video.on('complete', () => {

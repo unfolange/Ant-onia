@@ -7,14 +7,14 @@ export class MenuScene extends Phaser.Scene {
     // Cargar recursos necesarios para el menú
     this.load.image("sky", "assets/Menu1.png");
     this.load.image("button", "assets/PlayB.png");
-    this.load.audio("intro", "sounds/logo.mp3");
+    this.load.audio("intro", "sounds/Menu.mp3");
     this.load.audio("interface", "sounds/interface.mp3");
   }
 
   create() {
     // Lógica y elementos gráficos del menú
     this.intro = this.sound.add("intro");
-    //  this.intro.play();
+      this.intro.play();
     this.intro.setVolume(0.05);
 
     this.add.image(500, 400, "sky").setScale(0.49);
