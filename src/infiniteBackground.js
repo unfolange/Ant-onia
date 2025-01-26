@@ -37,6 +37,9 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     this.load.image("background2", "assets/Fondo2.jpg");
     this.load.image("heart", "assets/Face.png"); 
     this.load.audio("audio_lvl_2", "sounds/sound-level2.mp3");
+    this.load.audio("coinSound", "sounds/Itemcollectable.mp3"); // Sonido para recoger moneda
+    this.load.audio("hitSound", "sounds/Golpe.mp3"); // Sonido para golpe
+    this.load.audio("muerte", "sounds/Muerte.mp3"); // Sonido para caundo muere
 
     // Carga adicional para el obstáculo lento
     this.load.image("slowObstacle", "assets/Ramita.png");
@@ -49,8 +52,12 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
 
   create() {
     // Música de fondo
-    this.intro = this.sound.add("audio_lvl_2");
+    this.intro = this.sound.add("audio_lvl_2", { loop: true });
     this.intro.play();
+    //Musica de interacciones
+    this.coinSound = this.sound.add("coinSound");
+    this.hitSound = this.sound.add("hitSound");
+    this.muerte = this.sound.add("muerte");
 
     // Fondo infinito
     this.backgroundTile = this.add.tileSprite(
@@ -239,6 +246,7 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
 
   // Al chocar con obstáculo
   hitObstacle(player, obstacle) {
+    this.hitSound.play(); // Reproduce el sonido de golpe
     obstacle.destroy();
     this.lives--;
     player.setVelocity(0); // Detenemos al jugador momentáneamente
@@ -248,6 +256,7 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     }
 
     if (this.lives <= 0) {
+      this.muerte.play();
       this.add.text(100, 250, "Perdiste", { fontSize: "32px", fill: "#f00" });
       this.scene.pause();
       
@@ -256,6 +265,7 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
 
   // Al recolectar moneda
   collectCoin(player, coin) {
+    this.coinSound.play(); // Reproduce el sonido de recoger moneda
     coin.destroy();
     this.score++;
     this.scoreText.setText("Frutos: " + this.score);
