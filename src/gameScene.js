@@ -34,7 +34,7 @@ export class gameScene extends Phaser.Scene {
     // this.add.image(400, 300, "background");
     this.physics.world.gravity.y = 300;
 
-    this.add.image(510, 400, "background").setScale(1.1);
+    this.add.image(510, 300, "background").setScale(1.1, 1.3);
 
     this.platforms = this.physics.add.staticGroup();
     this.createInitialPlatforms();

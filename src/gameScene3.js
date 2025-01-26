@@ -32,7 +32,7 @@ export class gameScene3 extends Phaser.Scene {
     // this.add.image(400, 300, "background");
     this.physics.world.gravity.y = 300;
 
-    this.add.image(510, 400, "backgroundt").setScale(1.1);
+    this.add.image(510, 300, "backgroundt").setScale(1.1, 1.3);
 
     this.platforms = this.physics.add.staticGroup();
     this.createInitialPlatforms();
@@ -156,7 +156,7 @@ export class gameScene3 extends Phaser.Scene {
     } else if (this.buble.body.velocity.x < 0) {
       this.buble.setVelocityX(this.buble.body.velocity.x * 0.98); // Desacelerar
     }
-    if (this.buble.x >= 950) {
+    if (this.buble.x >= 800) {
       // Límite izquierdo o derecho
       if (this.forestSound) {
         this.forestSound.stop();
@@ -167,7 +167,7 @@ export class gameScene3 extends Phaser.Scene {
         this.buble.x = 0; // Asegúrate de que no atraviese el borde
       }
       console.log("Buble ha tocado la esquina horizontal");
-      this.scene.start("InfiniteBackgroundScene");
+      this.scene.start("CinematicScene2");
 
       // Aquí puedes cambiar de escena:
       // this.scene.start('otraEscena');

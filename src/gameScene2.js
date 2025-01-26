@@ -34,7 +34,7 @@ export class gameScene2 extends Phaser.Scene {
     // this.add.image(400, 300, "background");
     this.physics.world.gravity.y = 300;
 
-    this.add.image(510, 400, "background21").setScale(1.1);
+    this.add.image(510, 300, "background21").setScale(1.1, 1.3);
 
     this.platforms = this.physics.add.staticGroup();
     this.createInitialPlatforms();
@@ -167,7 +167,7 @@ export class gameScene2 extends Phaser.Scene {
       this.scene.start("gameScene3");
       if (this.buble.x <= 50) {
         // Verifica si la burbuja toca el lado izquierdo
-        this.buble.setVelocityX(50); // Detén su movimiento horizontal
+        this.buble.setVelocityX(100); // Detén su movimiento horizontal
         this.buble.x = 50; // Asegúrate de que no atraviese el borde
       }
       // Aquí puedes cambiar de escena:
