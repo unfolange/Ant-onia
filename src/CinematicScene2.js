@@ -7,6 +7,10 @@ export class CinematicScene2 extends Phaser.Scene {
       // Cargar el video
       this.load.video('Videolvl2', 'assets/Scene_02.mp4', 'loadeddata', false, true);
     }
+
+    init(data) {
+      this.lives = data.lives || 0; // Asegúrate de manejar un valor por defecto
+    }
   
     create() {
       // Crear el video en la escena
@@ -41,13 +45,15 @@ export class CinematicScene2 extends Phaser.Scene {
   
       // Cuando el video termine, cambiar a la escena del juego
       video.on('complete', () => {
-        this.scene.start('InfiniteBackgroundScene'); // Cambia 'gameScene' por el nombre de tu escena principal
+        console.log("Vidas enviadas desde CinematicScene2:", this.lives);
+        this.scene.start("InfiniteBackgroundScene", { lives: this.lives });
       });
   
       // Opción para omitir la cinemática al presionar una tecla
       this.input.keyboard.once('keydown-SPACE', () => {
         video.stop(); // Detener el video
-        this.scene.start('InfiniteBackgroundScene'); // Cambiar a la escena del juego
+        console.log("Vidas enviadas desde CinematicScene2:", this.lives);
+        this.scene.start("InfiniteBackgroundScene", { lives: this.lives });
       });
   
       // Mostrar un texto para indicar cómo omitir la cinemática

@@ -1,11 +1,13 @@
-import MenuScene from "./menuScene";
-import infiniteBackgroundScene from "./infiniteBackground";
-import gameOver from "./gameOver";
-import gameScene from "./gameScene"; // Cambia "gameSceneame" al nombre correcto
-import gameScene2 from "./gameScene2"; // Cambia "gameSceneame" al nombre correcto
-import gameScene3 from "./gameScene3"; // Cambia "gameSceneame" al nombre correcto
-import CinematicScene from "./CinematicScene"; // Cambia "gameSceneame" al nombre correcto
-import CinematicScene2 from "./CinematicScene2"; // Cambia "gameSceneame" al nombre correcto
+import MenuScene from "./menuScene.js";
+import infiniteBackgroundScene from "./infiniteBackground.js";
+import gameOver from "./gameOver.js";
+import gameOverWin from "./gameOverWin.js";
+import gameScene from "./gameScene.js"; // Cambia "gameSceneame" al nombre correcto
+import gameScene2 from "./gameScene2.js"; // Cambia "gameSceneame" al nombre correcto
+import gameScene3 from "./gameScene3.js"; // Cambia "gameSceneame" al nombre correcto
+import CinematicScene from "./CinematicScene.js"; // Cambia "gameSceneame" al nombre correcto
+import CinematicScene2 from "./CinematicScene2.js"; // Cambia "gameSceneame" al nombre correcto
+import endGame from "./endGame.js"; // Cambia "gameSceneame" al nombre correcto
 
 var config = {
   type: Phaser.AUTO,
@@ -22,6 +24,8 @@ var config = {
     gameScene3,
     CinematicScene,
     CinematicScene2,
+    endGame,
+    gameOverWin,
   ], // Asegúrate de que todos los nombres sean correctos
   physics: {
     default: "arcade",

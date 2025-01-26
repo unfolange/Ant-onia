@@ -13,14 +13,12 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
 
     // Variables de estado
     this.score = 0;
-    this.lives = 3;
     this.scoreText = null;
-    this.livesText = null;
 
     // Control del tiempo
     this.timer = null;         
     this.timerText = null;
-    this.timeLimit = 20;       
+    this.timeLimit = 60;       
     this.firstThird = Math.floor(this.timeLimit / 3);
     this.secondThird = Math.floor((2 * this.timeLimit) / 3);
     this.slowObstaclesCreated = false;
@@ -28,6 +26,7 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
 
     this.speedScreen = 0.2;
     this.maxCoins = 5;
+    this.backgroundInfinite = null
   }
 
   preload() {
@@ -35,6 +34,7 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     this.load.image("obstacle", "assets/Gota.png");
     this.load.image("coin", "assets/Bellota_Burbuja.png");
     this.load.image("background2", "assets/Fondo2.jpg");
+    this.load.image("background3", "assets/Fondo3F.png");
     this.load.image("heart", "assets/Face.png"); 
     this.load.audio("audio_lvl_2", "sounds/sound-level2.mp3");
     this.load.audio("coinSound", "sounds/Itemcollectable.mp3"); // Sonido para recoger moneda
@@ -50,6 +50,15 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     });
   }
 
+  init(data) {
+    this.lives = data.lives || 0; // Asegúrate de manejar un valor por defecto
+    console.log("Vidas recibidas en InfiniteBackgroundScene:", this.lives);
+  }
+
+  shutdown() {
+    this.time.removeAllEvents(); // Detener todos los temporizadores
+  }
+
   create() {
     this.sound.stopAll();
     // Música de fondo
@@ -59,14 +68,14 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     this.coinSound = this.sound.add("coinSound");
     this.hitSound = this.sound.add("hitSound");
     this.muerte = this.sound.add("muerte");
-
+    this.backgroundInfinite = "background2"
     // Fondo infinito
     this.backgroundTile = this.add.tileSprite(
       0,
       0,
       this.sys.canvas.width,
       this.sys.canvas.height,
-      "background2"
+      this.backgroundInfinite
     );
     this.backgroundTile.setOrigin(0, 0);
 
@@ -80,7 +89,7 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
       frameRate: 6,
       repeat: -1,
     });
-
+  
     // Jugador
     this.player = this.physics.add
       .sprite(this.sys.canvas.width / 2, this.sys.canvas.height - 200, "Fly_Antonia")
@@ -183,9 +192,9 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     // Condición para ganar o perder si el jugador llega arriba (y < 0)
     if (this.player.y < 0) {
       if (this.score >= 10) {
-        this.scene.start("gameOver", { resultado: "ganaste", puntaje: this.score });
+        this.scene.start("gameOver", { resultado: "ganaste", score: this.score });
       } else {
-        this.scene.start("gameOver", { resultado: "perdiste", puntaje: this.score });
+        this.scene.start("gameOver", { resultado: "perdiste", score: this.score });
       }
     }
   }
@@ -268,8 +277,7 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
 
     if (this.lives <= 0) {
       this.muerte.play();
-      this.add.text(100, 250, "Perdiste", { fontSize: "32px", fill: "#f00" });
-      this.scene.pause();
+      this.scene.start("gameOver", { resultado: "perdiste", score: this.score });
     }
   }
 
@@ -336,14 +344,15 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     if (this.timeLimit <= 0) {
       this.time.removeAllEvents();
 
-      if (this.score >= 5) {
-        this.scene.start("gameOver", { resultado: "ganaste", puntaje: this.score });
+      if (this.score >= 10) {
+        this.scene.start("endGame", { resultado: "ganaste", score: this.score });
       } else {
-        this.scene.start("gameOver", { resultado: "perdiste", puntaje: this.score });
+        this.scene.start("endGame", { resultado: "perdiste", score: this.score });
       }
     }
   }
 
+  
   // Reinicia la escena y variables
   resetGame() {
     this.score = 0;

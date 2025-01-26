@@ -18,7 +18,7 @@ export class MenuScene extends Phaser.Scene {
     this.intro.setVolume(0.05);
 
     this.add.image(500, 400, "sky").setScale(0.49);
-    const playButton = this.add.image(240, 450, "button");
+    const playButton = this.add.image(190, 450, "button");
 
     playButton.setInteractive();
 

@@ -11,9 +11,16 @@ export class gameScene2 extends Phaser.Scene {
     this.bugs = null; // Grupo de mosquitos
   }
 
+  init(data) {
+    // Recibe las vidas desde la escena anterior
+    this.lives = data.lives || 0; // Asegúrate de manejar un valor por defecto
+  }
+
   preload() {
     // Carga de imágenes
-
+    this.load.audio("hitSound", "sounds/Golpe.mp3"); // Sonido para golpe
+    this.load.audio("muerte", "sounds/Muerte.mp3"); // Sonido para caundo muere
+    this.load.image("heart", "assets/Face.png"); 
     this.load.image("background21", "assets/Fondod.png");
     this.load.image("flotante", "assets/pisoFlotante.png");
     this.load.image("flotante2", "assets/pisoFlotante2.png");
@@ -29,7 +36,8 @@ export class gameScene2 extends Phaser.Scene {
 
   create() {
     this.sound.stopAll();
-
+    this.hitSound = this.sound.add("hitSound");
+    this.muerte = this.sound.add("muerte");
     // Fondo infinito
     // this.add.image(400, 300, "background");
     this.physics.world.gravity.y = 300;
@@ -38,6 +46,15 @@ export class gameScene2 extends Phaser.Scene {
 
     this.platforms = this.physics.add.staticGroup();
     this.createInitialPlatforms();
+
+    this.hearts = [];
+    for (let i = 0; i < this.lives; i++) {
+      const heart = this.add
+        .image(10 + i * 40, 40, "heart")
+        .setScale(0.07)
+        .setOrigin(0, 0);
+      this.hearts.push(heart);
+    }
 
     // this.platforms.create(350, 568, "ground").setScale(3).refreshBody();
     this.player = this.physics.add.sprite(100, 200, "dude");
@@ -163,8 +180,8 @@ export class gameScene2 extends Phaser.Scene {
       if (this.forestSound) {
         this.forestSound.stop();
       }
-      console.log("Buble ha tocado la esquina horizontal");
-      this.scene.start("gameScene3");
+      this.scene.start("gameScene3", { lives: this.lives });
+
       if (this.buble.x <= 50) {
         // Verifica si la burbuja toca el lado izquierdo
         this.buble.setVelocityX(100); // Detén su movimiento horizontal
@@ -187,8 +204,17 @@ export class gameScene2 extends Phaser.Scene {
     }
   }
   onPlayerCollision() {
-    console.log("¡Has perdido!");
-    this.scene.restart(); // Reinicia la escena
+    this.hitSound.play(); // Reproduce el sonido de golpe
+    this.lives--;
+
+    if (this.lives >= 0) {
+      this.hearts[this.lives].destroy();
+    }
+
+    if (this.lives <= 0) {
+      this.muerte.play();
+      this.scene.start("gameOver", { resultado: "perdiste", score: 0 });
+    }
   }
   createInitialPlatforms() {
     this.platforms.create(500, 780, "ground").setScale(3).refreshBody();

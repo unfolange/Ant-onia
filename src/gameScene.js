@@ -13,7 +13,6 @@ export class gameScene extends Phaser.Scene {
 
   preload() {
     // Carga de imágenes
-
     this.load.image("background", "assets/Fondo1.1.png");
     this.load.image("ground", "assets/piso.png");
     this.load.image("flotante", "assets/pisoFlotante.png");
@@ -25,11 +24,19 @@ export class gameScene extends Phaser.Scene {
       frameHeight: 220,
     });
     this.load.audio("forestSound", "sounds/cool.mp3"); // Asegúrate de usar la ruta correcta
+    this.load.audio("hitSound", "sounds/Golpe.mp3"); // Sonido para golpe
+    this.load.audio("muerte", "sounds/Muerte.mp3"); // Sonido para caundo muere
+    this.load.image("heart", "assets/Face.png"); 
+  }
+
+  init(data) {
+    this.lives = data.lives || 3; // Asegúrate de manejar un valor por defecto
   }
 
   create() {
     this.sound.stopAll();
-
+    this.hitSound = this.sound.add("hitSound");
+    this.muerte = this.sound.add("muerte");
     // Fondo infinito
     // this.add.image(400, 300, "background");
     this.physics.world.gravity.y = 300;
@@ -42,6 +49,15 @@ export class gameScene extends Phaser.Scene {
     // this.platforms.create(350, 568, "ground").setScale(3).refreshBody();
     this.player = this.physics.add.sprite(100, 500, "dude");
     this.player.setScale(0.5);
+
+    this.hearts = [];
+    for (let i = 0; i < this.lives; i++) {
+      const heart = this.add
+        .image(10 + i * 40, 40, "heart")
+        .setScale(0.07)
+        .setOrigin(0, 0);
+      this.hearts.push(heart);
+    }
 
     this.player.setBounce(0.2);
     this.player.setCollideWorldBounds(true);
@@ -156,11 +172,7 @@ export class gameScene extends Phaser.Scene {
       if (this.forestSound) {
         this.forestSound.stop();
       }
-      console.log("Buble ha tocado la esquina horizontal");
-      this.scene.start("gameScene2");
-
-      // Aquí puedes cambiar de escena:
-      // this.scene.start('otraEscena');
+      this.scene.start("gameScene2", { lives: this.lives });
     }
 
     if (this.buble.x <= 20) {
@@ -182,8 +194,17 @@ export class gameScene extends Phaser.Scene {
     }
   }
   onPlayerCollision() {
-    console.log("¡Has perdido!");
-    this.scene.restart(); // Reinicia la escena
+    this.hitSound.play(); // Reproduce el sonido de golpe
+    this.lives--;
+
+    if (this.lives >= 0) {
+      this.hearts[this.lives].destroy();
+    }
+
+    if (this.lives <= 0) {
+      this.muerte.play();
+      this.scene.start("gameOver", { resultado: "perdiste", score: 0 });
+    }
   }
   createInitialPlatforms() {
     this.platforms.create(500, 780, "ground").setScale(3).refreshBody();

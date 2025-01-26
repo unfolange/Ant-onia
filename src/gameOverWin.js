@@ -1,8 +1,6 @@
-import { gameScene } from './gameScene.js';
-
-export class gameOver extends Phaser.Scene {
+export class gameOverWin extends Phaser.Scene {
     constructor() {
-        super({ key: 'gameOver' });
+        super({ key: 'gameOverWin' });
     }
 
     init(data) {
@@ -16,7 +14,7 @@ export class gameOver extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('over', 'assets/GameOverF.png');
+        this.load.image('over', 'assets/Win.png');
         this.load.image('button_retry', 'assets/Retry.png');
     }
 
@@ -42,11 +40,13 @@ export class gameOver extends Phaser.Scene {
 
         playAgainText.on('pointerdown', () => {
             // Reiniciar la escena del juego
-            this.scene.stop("InfiniteBackgroundScene");
             this.scene.stop('gameScene');  // Detener la escena actual
             this.scene.start('gameScene', { lives: 3, score: 0, highScore: this.storedHighScore });  // Reiniciar la escena con un nuevo objeto de datos
         });
+
+        
+
     }
 }
 
-export default gameOver;
+export default gameOverWin;
