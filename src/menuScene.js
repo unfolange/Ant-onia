@@ -21,13 +21,13 @@ export class MenuScene extends Phaser.Scene {
     const playButton = this.add.image(240, 450, "button");
 
     playButton.setInteractive();
-    
+
     playButton.on("pointerdown", () => {
       // Iniciar la escena del juego
       this.scene.start("CinematicScene");
       // Detener el sonido de intro si aún está reproduciéndose
       if (this.intro) {
-          this.intro.stop();
+        this.intro.stop();
       }
     });
   }

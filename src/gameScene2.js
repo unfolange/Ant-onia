@@ -1,6 +1,6 @@
-export class gameScene extends Phaser.Scene {
+export class gameScene2 extends Phaser.Scene {
   constructor() {
-    super({ key: "gameScene" });
+    super({ key: "gameScene2" });
 
     // Referencias a objetos y variables necesarias
     this.backgroundTile = null;
@@ -14,13 +14,13 @@ export class gameScene extends Phaser.Scene {
   preload() {
     // Carga de imágenes
 
-    this.load.image("background", "assets/Fondo1.1.png");
-    this.load.image("ground", "assets/piso.png");
+    this.load.image("background21", "assets/Fondod.png");
     this.load.image("flotante", "assets/pisoFlotante.png");
     this.load.image("flotante2", "assets/pisoFlotante2.png");
+    this.load.image("ground", "assets/piso.png");
     this.load.image("buble", "assets/buble.png");
     this.load.image("bug", "assets/mosquito.png"); // Carga el sprite del bicho
-    this.load.spritesheet("dude", "assets/Pushing.png", {
+    this.load.spritesheet("dude", "assets/pushing.png", {
       frameWidth: 218.5,
       frameHeight: 220,
     });
@@ -34,30 +34,39 @@ export class gameScene extends Phaser.Scene {
     // this.add.image(400, 300, "background");
     this.physics.world.gravity.y = 300;
 
-    this.add.image(510, 400, "background").setScale(1.1);
+    this.add.image(510, 400, "background21").setScale(1.1);
 
     this.platforms = this.physics.add.staticGroup();
     this.createInitialPlatforms();
 
     // this.platforms.create(350, 568, "ground").setScale(3).refreshBody();
-    this.player = this.physics.add.sprite(100, 500, "dude");
+    this.player = this.physics.add.sprite(100, 200, "dude");
     this.player.setScale(0.5);
 
     this.player.setBounce(0.2);
     this.player.setCollideWorldBounds(true);
     this.physics.world.setBoundsCollision(true, true, true, true);
 
-    this.buble = this.physics.add.sprite(300, 490, "buble");
+    this.buble = this.physics.add.sprite(390, 0, "buble");
     this.buble.setDisplaySize(100, 100);
     // Crear grupo de insectos
     this.bugs = this.physics.add.group();
 
     this.time.addEvent({
-      delay: 2500, // Cada 4 segundos
+      delay: 8000, // Cada 4 segundos
       callback: this.spawnBug,
       callbackScope: this,
       loop: true,
     });
+
+    // // Configurar bicho
+    // this.bug = this.physics.add.sprite(400, 300, "bug");
+    // this.bug.setScale(0.1);
+
+    // this.bug.setBounce(1); // Rebote total
+    // this.bug.setCollideWorldBounds(true); // Colisiona con bordes
+    // this.bug.setVelocity(200, 150); // Velocidad inicial
+
     this.anims.create({
       key: "right",
       frames: this.anims.generateFrameNumbers("dude", { start: 0, end: 7 }),
@@ -113,13 +122,11 @@ export class gameScene extends Phaser.Scene {
     // );
 
     // Reproduce el sonido de fondo en loop
-    if (!this.forestSound) {
-      this.forestSound = this.sound.add("forestSound", {
-        loop: true,
-        volume: 0.2,
-      });
-      this.forestSound.play();
-    }
+    this.forestSound = this.sound.add("forestSound", {
+      loop: true,
+      volume: 0.2,
+    });
+    this.forestSound.play();
   }
 
   update() {
@@ -157,16 +164,14 @@ export class gameScene extends Phaser.Scene {
         this.forestSound.stop();
       }
       console.log("Buble ha tocado la esquina horizontal");
-      this.scene.start("gameScene2");
-
+      this.scene.start("gameScene3");
+      if (this.buble.x <= 50) {
+        // Verifica si la burbuja toca el lado izquierdo
+        this.buble.setVelocityX(50); // Detén su movimiento horizontal
+        this.buble.x = 50; // Asegúrate de que no atraviese el borde
+      }
       // Aquí puedes cambiar de escena:
       // this.scene.start('otraEscena');
-    }
-
-    if (this.buble.x <= 20) {
-      // Verifica si la burbuja toca el lado izquierdo
-      this.buble.setVelocityX(0); // Detén su movimiento horizontal
-      this.buble.x = 0; // Asegúrate de que no atraviese el borde
     }
   }
 
@@ -187,20 +192,25 @@ export class gameScene extends Phaser.Scene {
   }
   createInitialPlatforms() {
     this.platforms.create(500, 780, "ground").setScale(3).refreshBody();
-    // this.platforms.create(50, 250, "flotante2");
-    // this.platforms.create(500, 450, "flotante2").setScale(1, 0.1).refreshBody();
-    // this.add.image(500, 450, "flotante2").setOrigin(0.5, 0.5);
 
-    // this.platforms.create(650, 300, "flotante2").setScale(1, 0.1).refreshBody();
-    // this.add.image(650, 300, "flotante2").setOrigin(0.5, 0.5);
+    this.platforms
+      .create(400, 380, "flotante2")
+      .setScale(0.7, 0.1)
+      .refreshBody();
+    //this.add.image(310, 380, "flotante2").setOrigin(0.1, 0.1);
+    this.add.image(400, 380, "flotante2").setScale(0.8, 1); // Escala 50% en x, 100% en y
 
-    //  this.platforms.create(750, 220, "flotante");
+    this.platforms
+      .create(690, 450, "flotante2")
+      .setScale(0.4, 0.1)
+      .refreshBody();
+    this.add.image(720, 450, "flotante2").setScale(0.6, 0.8);
   }
-
+  5;
   spawnBug() {
     const bug = this.bugs.create(
-      Phaser.Math.Between(0, 750),
-      Phaser.Math.Between(0, 300),
+      Phaser.Math.Between(50, 750),
+      Phaser.Math.Between(50, 300),
       "bug"
     );
     bug.setScale(0.1); // Reducir tamaño del insecto
@@ -216,4 +226,4 @@ export class gameScene extends Phaser.Scene {
   // Reinicia la escena y variables
 }
 
-export default gameScene;
+export default gameScene2;
