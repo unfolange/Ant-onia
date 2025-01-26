@@ -164,7 +164,7 @@ export class gameScene extends Phaser.Scene {
     }
 
     if (this.buble.x <= 20) {
-      // Verifica si la burbuja toca el lado izquierdo
+      // Verifica si la burbuja toca e lado izquierdo
       this.buble.setVelocityX(0); // Detén su movimiento horizontal
       this.buble.x = 0; // Asegúrate de que no atraviese el borde
     }
