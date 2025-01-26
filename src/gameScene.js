@@ -153,7 +153,7 @@ export class gameScene extends Phaser.Scene {
         this.forestSound.stop();
       }
       console.log("Buble ha tocado la esquina horizontal");
-      this.scene.start("InfiniteBackgroundScene");
+      this.scene.start("CinematicScene2");
 
       // Aquí puedes cambiar de escena:
       // this.scene.start('otraEscena');
