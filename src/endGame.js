@@ -52,10 +52,10 @@ export class endGame extends Phaser.Scene {
     }
 
     changeBackground(){
-        if (this.currentScore > 1) {
-            this.scene.start("gameOver", { score: this.currentScore });
-        }else{
+        if (this.currentScore > 10) {
             this.scene.start("gameOverWin", { score: this.currentScore });
+        }else{
+            this.scene.start("gameOver", { score: this.currentScore });
         }
     }
 }
