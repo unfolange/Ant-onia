@@ -18,7 +18,7 @@ export class gameScene extends Phaser.Scene {
     this.load.image("ground", "assets/negro.png");
     this.load.image("buble", "assets/buble.png");
     this.load.image("bug", "assets/mosquito.png"); // Carga el sprite del bicho
-    this.load.spritesheet("dude", "assets/pushing.png", {
+    this.load.spritesheet("dude", "assets/Pushing.png", {
       frameWidth: 218.5,
       frameHeight: 220,
     });

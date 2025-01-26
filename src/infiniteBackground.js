@@ -7,7 +7,7 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     this.player = null;
     this.obstacles = null;
     this.slowObstacles = null; 
-    this.leafObstacles = null; // Grupo para los obstáculos "tipo hoja"
+    this.leafObstacles = null;
     this.coins = null;
     this.cursors = null;
 
@@ -18,39 +18,47 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     this.livesText = null;
 
     // Control del tiempo
-    this.timer = null;         // Almacenará el evento de Phaser
+    this.timer = null;         
     this.timerText = null;
-    this.timeLimit = 60;       // Duración total del temporizador
-    this.firstThird = Math.floor(this.timeLimit / 3);     // Primer tercio
-    this.secondThird = Math.floor((2 * this.timeLimit) / 3); // Segundo tercio
+    this.timeLimit = 60;       
+    this.firstThird = Math.floor(this.timeLimit / 3);
+    this.secondThird = Math.floor((2 * this.timeLimit) / 3);
     this.slowObstaclesCreated = false;
     this.secondMechanicActive = false;
 
     this.speedScreen = 0.2;
+    this.maxCoins = 5;
   }
 
   preload() {
     // Carga de imágenes
-    this.load.image("player", "assets/dude.png"); // Ajusta la ruta
     this.load.image("obstacle", "assets/Gota.png");
     this.load.image("coin", "assets/Bellota_Burbuja.png");
     this.load.image("background2", "assets/Fondo2.jpg");
     this.load.image("heart", "assets/Face.png"); 
     this.load.audio("audio_lvl_2", "sounds/sound-level2.mp3");
+    this.load.audio("coinSound", "sounds/Itemcollectable.mp3"); // Sonido para recoger moneda
+    this.load.audio("hitSound", "sounds/Golpe.mp3"); // Sonido para golpe
+    this.load.audio("muerte", "sounds/Muerte.mp3"); // Sonido para caundo muere
 
     // Carga adicional para el obstáculo lento
     this.load.image("slowObstacle", "assets/Ramita.png");
     this.load.image("leafObstacle", "assets/Hoja.png");
     this.load.spritesheet("Fly_Antonia", "assets/Fly_Antonia.png", {
-      frameWidth: 142, // ancho real de un cuadro
-      frameHeight: 300, // alto real de un cuadro
+      frameWidth: 142,
+      frameHeight: 300,
     });
   }
 
   create() {
+    this.sound.stopAll();
     // Música de fondo
-    this.intro = this.sound.add("audio_lvl_2");
+    this.intro = this.sound.add("audio_lvl_2", { loop: true });
     this.intro.play();
+    //Musica de interacciones
+    this.coinSound = this.sound.add("coinSound");
+    this.hitSound = this.sound.add("hitSound");
+    this.muerte = this.sound.add("muerte");
 
     // Fondo infinito
     this.backgroundTile = this.add.tileSprite(
@@ -83,7 +91,7 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     // Grupos de obstáculos y monedas
     this.obstacles = this.physics.add.group();
     this.slowObstacles = this.physics.add.group(); 
-    this.leafObstacles = this.physics.add.group(); // Grupo para "obstáculos-hoja"
+    this.leafObstacles = this.physics.add.group();
     this.coins = this.physics.add.group();
 
     // Controles
@@ -111,23 +119,41 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
       fill: "#fff",
     });
 
-    // Colisiones
+    // Colisiones y solapamientos
     this.physics.add.collider(this.player, this.obstacles, this.hitObstacle, null, this);
     this.physics.add.collider(this.player, this.slowObstacles, this.hitObstacle, null, this);
     this.physics.add.collider(this.player, this.leafObstacles, this.hitObstacle, null, this);
     this.physics.add.overlap(this.player, this.coins, this.collectCoin, null, this);
 
-    // Temporizadores para generar obstáculos y monedas
+    // Crea 3 monedas al inicio
+    for (let i = 0; i < 3; i++) {
+      this.spawnSingleCoin();
+    }
+
+    // Temporizador para validar la cantidad de monedas cada segundo
     this.time.addEvent({
-      delay: 1000,
-      callback: this.spawnObstacle,
+      delay: 1000, // Cada segundo
+      callback: this.checkAndSpawnCoins,
       callbackScope: this,
       loop: true,
     });
 
+    // A los 4 segundos, crea 2 monedas más
     this.time.addEvent({
-      delay: 1500,
-      callback: this.spawnCoin,
+      delay: 4000,
+      callback: () => {
+        for (let i = 0; i < 2; i++) {
+          this.spawnSingleCoin();
+        }
+      },
+      callbackScope: this,
+      loop: false,
+    });
+
+    // Temporizador para generar obstáculos
+    this.time.addEvent({
+      delay: 1000,
+      callback: this.spawnObstacle,
       callbackScope: this,
       loop: true,
     });
@@ -154,20 +180,35 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     // Fondo infinito (movimiento vertical)
     this.backgroundTile.tilePositionY -= this.speedScreen;
 
-    // Generar más monedas si hay pocas (opcional)
-    if (this.coins.countActive(true) <= 3) {
-      this.spawnCoin();
-    }
-
     // Condición para ganar o perder si el jugador llega arriba (y < 0)
     if (this.player.y < 0) {
-      // Ganar solo si score >= 10, en caso contrario pierde
       if (this.score >= 10) {
-        // Escena de victoria (o "gameOver" si quieres usar la misma)
         this.scene.start("gameOver", { resultado: "ganaste", puntaje: this.score });
       } else {
         this.scene.start("gameOver", { resultado: "perdiste", puntaje: this.score });
       }
+    }
+  }
+
+  // Generar UNA sola moneda (y controlar que no superen 5)
+  spawnSingleCoin() {
+    if (this.coins.countActive(true) < 5) {
+      const x = Phaser.Math.Between(50, this.sys.canvas.width - 50);
+  
+      const coin = this.coins.create(x, 0, "coin").setScale(0.5);
+  
+      coin.setVelocityY(Phaser.Math.Between(100, 150));
+      coin.setCollideWorldBounds(false);
+      coin.setBounce(0);
+      coin.checkWorldBounds = true; // Permitir disparar eventos al salir del mundo
+      coin.outOfBoundsKill = true; // Marca para eliminar automáticamente
+  
+      // Listener para eliminar monedas al salir de los límites
+      coin.body.onWorldBounds = true;
+      coin.setInteractive(); // Asegura que se pueda eliminar bien
+      coin.on("worldbounds", () => {
+        coin.destroy(); // Elimina la moneda
+      });
     }
   }
 
@@ -180,85 +221,86 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     obstacle.outOfBoundsKill = true;
   }
 
-  // Genera obstáculos lentos
+  // Generar obstáculos lentos
   spawnSlowObstacle() {
     const x = Phaser.Math.Between(50, this.sys.canvas.width - 50);
     const slowObstacle = this.slowObstacles.create(x, 0, "slowObstacle").setScale(0.5);
 
-    // Velocidad más lenta que la de los obstáculos normales (o la que tú desees)
+    // Velocidad más rápida para el "obstáculo lento" (parece irónico, pero ajusta a tu gusto)
     slowObstacle.setVelocityY(400);
 
     slowObstacle.checkWorldBounds = true;
     slowObstacle.outOfBoundsKill = true;
   }
 
-  // Genera obstáculos tipo "hoja" (con movimiento ondulante)
+  // Generar obstáculos tipo "hoja"
   spawnLeafObstacle() {
     const x = Phaser.Math.Between(50, this.sys.canvas.width - 50);
-    // Cambia "leafObstacle" por la imagen que desees
     const leaf = this.leafObstacles.create(x, 0, "leafObstacle").setScale(0.4);
 
-    // Velocidad de caída moderada
     leaf.setVelocityY(60);
     leaf.checkWorldBounds = true;
     leaf.outOfBoundsKill = true;
 
-    // Simular vaivén como hoja con un tween en X
+    // Movimiento ondulante
     this.tweens.add({
       targets: leaf,
       x: {
-        value: leaf.x + Phaser.Math.Between(-50, 50), // Se mueve 50 px a izq/der
+        value: leaf.x + Phaser.Math.Between(-50, 50),
         duration: 1000,
         ease: "Sine.easeInOut",
       },
-      repeat: -1, // Repetir infinitamente
-      yoyo: true, // Regresar
+      repeat: -1,
+      yoyo: true,
     });
-  }
-
-  // Genera monedas
-  spawnCoin() {
-    if (this.coins.countActive(true) <= 3) {
-      // Crear un grupo de 5 monedas
-      for (let i = 0; i < 5; i++) {
-        const x = Phaser.Math.Between(50, this.sys.canvas.width - 50);
-        const y = Phaser.Math.Between(50, 300);
-
-        const coin = this.coins.create(x, y, "coin").setScale(0.5);
-
-        // Configurar la física de la moneda
-        coin.setGravityY(20);
-        coin.setDragY(15);
-        coin.setBounce(0.3);
-        coin.setCollideWorldBounds(true);
-        coin.checkWorldBounds = true;
-        coin.outOfBoundsKill = true;
-      }
-    }
   }
 
   // Al chocar con obstáculo
   hitObstacle(player, obstacle) {
+    this.hitSound.play(); // Reproduce el sonido de golpe
     obstacle.destroy();
     this.lives--;
-    player.setVelocity(0); // Detenemos al jugador momentáneamente
+    player.setVelocity(0); 
 
     if (this.lives >= 0) {
       this.hearts[this.lives].destroy();
     }
 
     if (this.lives <= 0) {
+      this.muerte.play();
       this.add.text(100, 250, "Perdiste", { fontSize: "32px", fill: "#f00" });
       this.scene.pause();
-      
     }
+  }
+
+  checkAndSpawnCoins() {
+    const currentCoins = this.coins.countActive(true);
+    if (currentCoins < this.maxCoins) {
+      const coinsToSpawn = this.maxCoins - currentCoins;
+      for (let i = 0; i < coinsToSpawn; i++) {
+        this.spawnSingleCoin();
+      }
+    }
+  
+    // Revisión extra: eliminar monedas fuera de los límites (si es necesario)
+    this.coins.getChildren().forEach((coin) => {
+      if (coin.y > this.sys.canvas.height) {
+        coin.destroy();
+      }
+    });
   }
 
   // Al recolectar moneda
   collectCoin(player, coin) {
+    this.coinSound.play(); // Reproduce el sonido de recoger moneda
     coin.destroy();
     this.score++;
     this.scoreText.setText("Frutos: " + this.score);
+
+    // Crea una moneda nueva (si no alcanzamos las 5)
+    if (this.coins.countActive(true) < 5) {
+      this.spawnSingleCoin();
+    }
   }
 
   // Se llama cada segundo para reducir el tiempo
@@ -266,11 +308,10 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
     this.timeLimit--;
     this.timerText.setText(`Tiempo: ${this.timeLimit}`);
 
-    // 1) Cuando llega al primer tercio del tiempo, activamos los obstáculos lentos
+    // 1) Primer tercio
     if (this.timeLimit === this.firstThird && !this.slowObstaclesCreated) {
-      this.speedScreen = 0.6
+      this.speedScreen = 0.6;
       this.slowObstaclesCreated = true;
-      // Generar obstáculos lentos cada cierto tiempo (ej: 1500 ms)
       this.time.addEvent({
         delay: 1500,
         callback: this.spawnLeafObstacle,
@@ -279,11 +320,10 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
       });
     }
 
-    // 2) Cuando llega al segundo tercio, activamos la mecánica de "hoja"
+    // 2) Segundo tercio
     if (this.timeLimit === this.secondThird && !this.secondMechanicActive) {
       this.secondMechanicActive = true;
-      this.speedScreen = 1
-      // Generar obstáculos-hoja cada 2s
+      this.speedScreen = 1;
       this.time.addEvent({
         delay: 1500,
         callback: this.spawnSlowObstacle,
@@ -292,12 +332,10 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
       });
     }
 
-    // Si el tiempo se acaba, determinamos victoria o derrota
+    // Si el tiempo se acaba
     if (this.timeLimit <= 0) {
-      // Eliminamos todos los eventos de tiempo
       this.time.removeAllEvents();
 
-      // Condición de victoria/derrota (ajusta como gustes)
       if (this.score >= 5) {
         this.scene.start("gameOver", { resultado: "ganaste", puntaje: this.score });
       } else {
@@ -315,7 +353,6 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
 
     // Reiniciamos temporizador
     this.timeLimit = 10;
-    // Recalculamos tercios
     this.firstThird = Math.floor(this.timeLimit / 3);
     this.secondThird = Math.floor((2 * this.timeLimit) / 3);
 
@@ -325,7 +362,6 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
 
     this.timerText.setText(`Tiempo: ${this.timeLimit}`);
 
-    // Reactivamos el temporizador principal
     this.timer.remove(false);
     this.timer = this.time.addEvent({
       delay: 1000,
@@ -334,7 +370,6 @@ export class InfiniteBackgroundScene extends Phaser.Scene {
       loop: true,
     });
 
-    // Reiniciamos la escena para limpiar todo
     this.scene.restart();
   }
 }
