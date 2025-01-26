@@ -158,7 +158,7 @@ export class gameScene2 extends Phaser.Scene {
     } else if (this.buble.body.velocity.x < 0) {
       this.buble.setVelocityX(this.buble.body.velocity.x * 0.98); // Desacelerar
     }
-    if (this.buble.x >= 780) {
+    if (this.buble.x >= 950) {
       // Límite izquierdo o derecho
       if (this.forestSound) {
         this.forestSound.stop();
